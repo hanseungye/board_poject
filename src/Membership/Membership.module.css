@@ -1,0 +1,125 @@
+body {
+  background-color: #f9fafb;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+h1 {
+  text-align: center;
+  margin-bottom: 24px;
+  color: #333;
+}
+
+.id_input {
+  background: #fff;
+  padding: 2rem;
+  max-width: 400px;
+  margin: 0 auto;
+  border-radius: 1rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+}
+
+.id_input label {
+  margin-bottom: 6px;
+  font-weight: 600;
+  color: #444;
+}
+
+.id_input input,
+.id_input select {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 18px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-sizing: border-box;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.id_input input:focus,
+.id_input select:focus {
+  outline: none;
+  border-color: #4caf50;
+  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
+}
+
+.signup_button {
+  width: 100%;
+  padding: 14px;
+  background-color: #4caf50;
+  color: white;
+  font-weight: bold;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.3s;
+}
+
+.signup_button:hover {
+  background-color: #45a049;
+}
+.input_wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.input_with_icon {
+  padding-right: 2.2rem;  /* ✅ 아이콘 자리 확보 */
+  height: 2.5rem;
+  width: 100%;
+  box-sizing: border-box;
+  font-size: 1rem;
+}
+
+.icon_right {
+  position: absolute;
+  right: 10px;
+  top: 30%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  font-size: 1.2rem;
+  color: #e60023;
+}
+.signup_button2{
+  width: 50%;
+  padding: 14px;
+  background-color: #4caf50;
+  color: white;
+  font-weight: bold;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.3s;
+}
+
+.email_verify_row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 0.3rem;
+}
+
+.email_code_input {
+  flex: 1;
+  height: 2.5rem;
+  font-size: 1rem;
+  padding: 0 0.75rem;
+}
+
+.verify_button {
+  height: 2.5rem;
+  padding: 0 1rem;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  background-color: #4caf50;
+  color: white;
+  font-weight: bold;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.3s;
+}
