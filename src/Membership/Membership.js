@@ -15,7 +15,7 @@ function Membership() {
   const [verificationMessage, setVerificationMessage] = useState(""); // 이메일 인증 상태나 안내 메시지 출력용 문자열
 
   const url = process.env.REACT_APP_API_URL;
-
+  console.log("API URL:",url);
   const onValidMail = async () => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!email || !email.trim()) {
