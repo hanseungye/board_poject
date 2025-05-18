@@ -46,7 +46,7 @@ function Login() {
         <div className={styles.password_box}>
           <div className={styles.password}>
             <label htmlFor="password">비밀번호</label>
-            <a href="#">비밀번호 찾기</a>
+            <a href="">비밀번호 찾기</a>
           </div>
           <input
             id="password"
