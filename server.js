@@ -23,7 +23,7 @@ const codes = {};
 app.post("/email", async (req, res) => {
   try {
     // ✅ 수정 1: POST에서는 query 대신 body에서 받기
-    const email = req.query.email;
+    const email = req.body.email;
 
     // ✅ 이메일 유효성 검사
     if (!email || !email.trim()) {
