@@ -15,7 +15,7 @@ function Membership() {
   const [verificationMessage, setVerificationMessage] = useState(""); // 이메일 인증 상태나 안내 메시지 출력용 문자열
 
   const url = process.env.REACT_APP_API_URL;
-  console.log("API URL:",url);
+  console.log("API URL:", url);
   const onValidMail = async () => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!email || !email.trim()) {
@@ -65,16 +65,16 @@ function Membership() {
     setPassword_bolean(password === value);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const requiredFields = {
       "id": id,
       "pw": password,
-      "비밀번호 재확인": password_check,
-      "이름": name,
-      "성별": gender,
+      "pw_check": password_check,
+      "name": name,
+      "gender": gender,
       "email": email,
-      "인증번호": email_check,
+      "email_check": email_check,
     };
 
     for (let [key, value] of Object.entries(requiredFields)) {
@@ -93,9 +93,32 @@ function Membership() {
       alert("이메일 인증을 완료해주세요.");
       return;
     }
+    console.log(requiredFields);
 
-    // : 가입 요청 전송
-    alert("가입 완료!");
+    let allFilled = true;
+    for (let key in requiredFields) {
+      if (!requiredFields[key]) {
+        allFilled = false;
+        break;
+      }
+    }
+    try {
+      if (allFilled) {
+        // 모든 조건이 true 일 때 실행.
+        const response = await axios.post(`${url}/users/register`,{  
+          id,
+          password,
+          name,
+          gender,
+          email
+        });
+        console.log("데이터 전송 성공",response.data);
+        alert("회원가입을 완료했습니다.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("회원가입 실패했습니다. 다시 입력해주세요.");
+    }
   };
 
   return (
@@ -199,7 +222,11 @@ function Membership() {
             </button>
           </div>
 
-          <button type="submit" className={styles.signup_button}>
+          <button
+            type="submit"
+            className={styles.signup_button}
+            onClick={handleSubmit}
+          >
             가입하기
           </button>
         </form>
