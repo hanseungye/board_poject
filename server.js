@@ -125,7 +125,7 @@ app.post("/users/register",async(req,res)=>{
   }
 });
 
-// ✅ 서버 실행 (이 부분은 그대로!)
-server.listen(5000, '0.0.0.0', () => {
-  console.log("서버 실행 중: http://192.168.1.9:5000");
+const PORT = process.env.PORT || 5000;
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`서버 실행 중: http://0.0.0.0:${PORT}`);
 });
