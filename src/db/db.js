@@ -1,10 +1,21 @@
-// db.js
-const { Pool } = require('pg');
-require('dotenv').config();
+require("dotenv").config();
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false } // Supabase 등 외부 DB는 SSL 필요
-});
+const http = require("http");
+const { neon } = require("@neondatabase/serverless");
+console.log("DATABASE_URL:", process.env.DATABASE_URL);
 
-module.exports = pool;
+// sql 함수로 쿼리 보내기
+const sql = neon(process.env.DATABASE_URL);
+
+const requestHandler = async (req, res) => {
+  try {
+    // 예시 쿼리: 데이터베이스 버전 정보
+    const result = await sql`SELECT version()`;
+    const { version } = result[0];
+    res.writeHead(200, { "Content-Type": "text/plain" });
+    res.end(version);
+  } catch (err) {
+    res.writeHead(500, { "Content-Type": "text/plain" });
+    res.end("DB Error: " + err.message);
+  }
+};

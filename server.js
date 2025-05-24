@@ -7,6 +7,9 @@ const nodemailer = require("nodemailer");
 const pool = require('./src/db/db'); 
 const bcrypt = require("bcrypt");
 
+const { neon } = require("@neondatabase/serverless");
+
+const sql = neon(process.env.DATABASE_URL);
 // 미들웨어
 app.use(cors());
 app.use(express.json());
@@ -22,15 +25,15 @@ const transporter = nodemailer.createTransport({
   }
 });
 
-// ✅ GET /users: users 테이블 전체 조회
 app.get('/users', async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM users');
-    res.json(result.rows);
+    const result = await sql`SELECT * FROM users`;
+    res.json(result);  // 또는 res.json({ rows: result }) 등
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
+
 
 // 이메일 인증용 임시 저장소
 const codes = {};
@@ -91,37 +94,42 @@ app.post("/verify", (req, res) => {
   }
 });
 // 회원가입 처리 로직
-app.post("/users/register",async(req,res)=>{
-  const {id,password,name,gender,email} = req.body;
-  try{
-    // 1. 비밀번호 해싱(암호화)
+
+app.post("/users/register", async (req, res) => {
+  const { id, password, name, gender, email } = req.body;
+  try {
+    // 1. 비밀번호 해싱
     const saltRounds = 10;
-    const hashedPassword = await bcrypt.hash(password,saltRounds);
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-    const sql = `
-    INSERT INTO users (id,password,name,gender,email) 
-    VALUES ($1,$2,$3,$4,$5) RETURNING *`;
-    const result = await pool.query(sql,[id,hashedPassword,name,gender,email]);
-    
-    const insertedId = result.rows[0].id; // 삽입된 유저의 id
-    console.log("Inserted user:",result.rows[0]);
-    // 2. 만약 'role'이 비어 있다면, role = "GM"으로 업데이트
-    // (role 컬럼이 NULL 이거나 '' 일 때만 업데이트)
-    //  여기서는, 삽입 직후 role이 비어 있다면 바로 업데이트
-    const updateSql = `
-    UPDATE users 
-    SET role = 'user'
-    WHERE (role IS NULL OR role = '')
-     AND id = $1
-     RETURNING *;
+    // 2. 유저 삽입
+    const insertResult = await sql`
+      INSERT INTO users (id, password, name, gender, email)
+      VALUES (${id}, ${hashedPassword}, ${name}, ${gender}, ${email})
+      RETURNING *;
     `;
-    const updateResult = await pool.query(updateSql,[insertedId]);
-    console.log("Role updated:",updateResult.rows[0]);
 
-    return res.status(201).json({message:"회원가입 성공!",user:result.rows[0]});
-  } catch(err){
-    console.error("회원가입 오류",err);
-    res.status(500).json({error:"회원가입 실패!"});
+    const insertedUser = insertResult[0];
+
+    // 3. role 업데이트 (role이 비어있으면)
+    let updatedUser = insertedUser;
+    if (!insertedUser.role || insertedUser.role === '') {
+      const updateResult = await sql`
+        UPDATE users
+        SET role = 'user'
+        WHERE (role IS NULL OR role = '')
+          AND id = ${insertedUser.id}
+        RETURNING *;
+      `;
+      if (updateResult.length > 0) {
+        updatedUser = updateResult[0];
+      }
+    }
+
+    res.status(201).json({ message: "회원가입 성공!", user: updatedUser });
+  } catch (err) {
+    console.error("회원가입 오류", err);
+    res.status(500).json({ error: "회원가입 실패!" });
   }
 });
 
