@@ -117,7 +117,7 @@ function Membership() {
         console.log("데이터 전송 성공",response.data);
         alert("회원가입을 완료했습니다.");
       }
-    } catch (err) {
+    } catch (error) {
       console.error("인증 실패:", error.response?.data || error.message);
       alert("인증에 실패했습니다.");
       setIsEmailVerified(false);
