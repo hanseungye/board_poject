@@ -108,6 +108,12 @@ app.post("/users/register", async (req, res) => {
     `;
     if (emailResult.length > 0){
       return res.status(409).json({message:"이미 가입된 이메일 입니다."});
+    } 
+    const idResult = await sql`
+      SELECT * FROM users WHERE id = ${id};
+    `;
+    if(idResult.length>0){
+      return res.status(403).json({message:"아이디가 중복 되었습니다."});
     }
     // 2. 유저 삽입
     const insertResult = await sql`

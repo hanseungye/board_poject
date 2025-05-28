@@ -34,6 +34,8 @@ function Membership() {
     } catch (e) {
       if(e.response && e.response?.status === 409){
         alert(e.response?.data.message);
+      } if(e.response && e.response?.status === 403){
+        alert(e.response?.data.message);
       }
       console.error(e);
       setVerificationMessage("이메일 인증 요청에 실패했습니다.");
@@ -56,9 +58,7 @@ function Membership() {
       setIsEmailVerified(true);
       setVerificationMessage("");
     } catch (error) {
-      console.error("인증 실패:", error.response?.data || error.message);
-      alert("인증에 실패했습니다.");
-      setIsEmailVerified(false);
+      console.error(error);
     }
   };
 
@@ -118,8 +118,9 @@ function Membership() {
         alert("회원가입을 완료했습니다.");
       }
     } catch (err) {
-      console.error(err);
-      alert("회원가입 실패했습니다. 다시 입력해주세요.");
+      console.error("인증 실패:", error.response?.data || error.message);
+      alert("인증에 실패했습니다.");
+      setIsEmailVerified(false);
     }
   };
 
