@@ -157,43 +157,46 @@ app.post("/users/register", async (req, res) => {
 // 만약에 틀리면 권한 오류인 거를 알려줌.
 // 해당 사용자 신원 확인 후 토큰 생성.
 app.post("/users/login/professor", async (req, res) => {
-  const { email, password } = req.body;
-  console.log("email의 값은? : ", email);
-  console.log("password의 값은? : ", password);
+  try {
+    const { email, password } = req.body;
+    // 로그 추가
+    console.log("email의 값은? : ", email);
+    console.log("password의 값은? : ", password);
 
-  const userResult = await sql`
-    SELECT * FROM users WHERE email = ${email}
-  `;
-  const user = userResult[0];
+    const userResult = await sql`
+      SELECT * FROM users WHERE email = ${email}
+    `;
+    const user = userResult[0];
 
-  // user가 없거나 role이 admin이 아니면
-  if (!user || user.role !== "admin") {
-    return res.status(403).json({ message: "관리자 계정이 아니거나 회원등록이 안 되어 있습니다. 가입 부탁 드립니다." });
+    if (!user || user.role !== "admin") {
+      return res.status(403).json({ message: "관리자 계정이 아니거나 회원등록이 안 되어 있습니다. 가입 부탁 드립니다." });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ message: "이메일이나 비밀번호가 틀렸습니다. 다시 입력해주세요." });
+    }
+
+    const token = jwt.sign(
+      {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        created_at: user.created_at,
+        gender: user.gender,
+        name: user.name
+      },
+      process.env.JWT_SECRET, // 오타 주의!
+      { expiresIn: "1h" }
+    );
+
+    res.status(200).json({ message: "ok", token, user: { id: user.id, email: user.email, role: user.role, name: user.name } });
+  } catch (err) {
+    console.error("로그인 오류:", err);  // 서버 콘솔에서 반드시 확인!
+    res.status(500).json({ message: "서버 내부 오류", error: err.message });
   }
-
-  // 비밀번호 체크 (bcrypt로)
-  const isMatch = await bcrypt.compare(password, user.password);
-  if (!isMatch) {
-    return res.status(401).json({ message: "이메일이나 비밀번호가 틀렸습니다. 다시 입력해주세요." });
-  }
-
-  // JWT 토큰 발급
-  const token = jwt.sign(
-    {
-      id: user.id,
-      email: user.email,
-      role: user.role,
-      created_at: user.created_at,
-      gender: user.gender,
-      name: user.name
-    },
-    process.env.JWT_SECRET, // 오타 주의!
-    { expiresIn: "1h" }
-  );
-
-  // 토큰과 일부 사용자 정보 반환 (비밀번호는 절대 포함X)
-  res.status(200).json({ message: "ok", token, user: { id: user.id, email: user.email, role: user.role, name: user.name } });
 });
+
 
 
 const PORT = process.env.PORT || 5000;
