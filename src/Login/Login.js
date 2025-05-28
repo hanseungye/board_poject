@@ -25,6 +25,7 @@ function Login() {
       const localhost_url = role === "교수"
         ? `${url}/users/login/professor`
         : `${url}/users/login/student`;
+      console.log(localhost_url);
       // 서버로 로그인 요청
       const response = await axios.post(localhost_url, { email, password }, {
         headers: { 'Content-Type': 'application/json' }
