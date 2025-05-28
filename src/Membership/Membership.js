@@ -31,8 +31,11 @@ function Membership() {
       const response = await axios.post(`${url}/email?email=${email}`, { email });
       console.log("이메일 요청:", response.data);
       setVerificationMessage("인증번호가 발송되었습니다. 이메일을 확인하세요.");
-    } catch (err) {
-      console.error(err);
+    } catch (e) {
+      if(e.response && e.response?.status === 409){
+        alert(e.response?.data.message);
+      }
+      console.error(e);
       setVerificationMessage("이메일 인증 요청에 실패했습니다.");
     }
   };
@@ -93,7 +96,6 @@ function Membership() {
       alert("이메일 인증을 완료해주세요.");
       return;
     }
-    console.log(requiredFields);
 
     let allFilled = true;
     for (let key in requiredFields) {
@@ -221,7 +223,6 @@ function Membership() {
               인증번호 요청
             </button>
           </div>
-
           <button
             type="submit"
             className={styles.signup_button}

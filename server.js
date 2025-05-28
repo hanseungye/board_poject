@@ -6,6 +6,7 @@ const server = require('http').createServer(app);
 const nodemailer = require("nodemailer");
 const pool = require('./src/db/db'); 
 const bcrypt = require("bcrypt");
+const jwt = require('jsonwebtoken');
 
 const { neon } = require("@neondatabase/serverless");
 
@@ -101,7 +102,13 @@ app.post("/users/register", async (req, res) => {
     // 1. 비밀번호 해싱
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
-
+    // 이메일 중복 체크
+    const emailResult = await sql`
+      SELECT * FROM users WHERE email = ${email};
+    `;
+    if (emailResult.length > 0){
+      return res.status(409).json({message:"이미 가입된 이메일 입니다."});
+    }
     // 2. 유저 삽입
     const insertResult = await sql`
       INSERT INTO users (id, password, name, gender, email)
@@ -118,7 +125,7 @@ app.post("/users/register", async (req, res) => {
         UPDATE users
         SET role = 'user'
         WHERE (role IS NULL OR role = '')
-          AND id = ${insertedUser.id}
+        AND id = ${insertedUser.id}
         RETURNING *;
       `;
       if (updateResult.length > 0) {
@@ -132,6 +139,49 @@ app.post("/users/register", async (req, res) => {
     res.status(500).json({ error: "회원가입 실패!" });
   }
 });
+// 로그인의 값을 받음.
+// 계정이 admin이고, email이랑 password 값이 맞으면 sql문 실행.
+// 만약에 틀리면 권한 오류인 거를 알려줌.
+// 해당 사용자 신원 확인 후 토큰 생성.
+app.post("/users/login/professor", async (req, res) => {
+  const { email, password } = req.body;
+  console.log("email의 값은? : ", email);
+  console.log("password의 값은? : ", password);
+
+  const userResult = await sql`
+    SELECT * FROM users WHERE email = ${email}
+  `;
+  const user = userResult[0];
+
+  // user가 없거나 role이 admin이 아니면
+  if (!user || user.role !== "admin") {
+    return res.status(403).json({ message: "관리자 계정이 아니거나 회원등록이 안 되어 있습니다. 가입 부탁 드립니다." });
+  }
+
+  // 비밀번호 체크 (bcrypt로)
+  const isMatch = await bcrypt.compare(password, user.password);
+  if (!isMatch) {
+    return res.status(401).json({ message: "이메일이나 비밀번호가 틀렸습니다. 다시 입력해주세요." });
+  }
+
+  // JWT 토큰 발급
+  const token = jwt.sign(
+    {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      created_at: user.created_at,
+      gender: user.gender,
+      name: user.name
+    },
+    process.env.JWT_SECRET, // 오타 주의!
+    { expiresIn: "1h" }
+  );
+
+  // 토큰과 일부 사용자 정보 반환 (비밀번호는 절대 포함X)
+  res.status(200).json({ message: "ok", token, user: { id: user.id, email: user.email, role: user.role, name: user.name } });
+});
+
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, '0.0.0.0', () => {

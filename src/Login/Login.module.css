@@ -7,7 +7,17 @@
   margin: 0;
   background-color: #f9fafb;
 }
-
+form {
+  margin:0;
+  padding:0;
+  width: 100%;
+  display: contents;
+}
+input[type="email"],
+input[type="password"] {
+  width: 100%;
+  box-sizing: border-box; /* padding/border 포함해서 width계산 */
+}
 .login_text {
   display: flex;
   flex-direction: column;
