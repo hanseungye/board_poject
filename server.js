@@ -12,7 +12,14 @@ const { neon } = require("@neondatabase/serverless");
 
 const sql = neon(process.env.DATABASE_URL);
 // 미들웨어
-app.use(cors());
+app.use(cors({
+  origin: [
+    "https://ps-board.netlify.app",
+    "http://localhost:3000"
+  ],
+  credentials: true
+}));
+
 app.use(express.json());
 
 // Nodemailer 설정
