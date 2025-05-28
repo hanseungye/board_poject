@@ -4,29 +4,25 @@ import axios from 'axios';
 
 function Membership() {
   // 상태 변수
-  const [id, setId] = useState(""); // 사용자 ID 입력 값
-  const [password, setPassword] = useState(""); // 비밀번호
-  const [passwordCheck, setPasswordCheck] = useState(""); // 비밀번호 재확인
-  const [name, setName] = useState(""); // 이름
-  const [gender, setGender] = useState(""); // 성별
-  const [email, setEmail] = useState(""); // 이메일
-  const [emailCheck, setEmailCheck] = useState(""); // 이메일 인증번호
-  const [isPasswordMatch, setIsPasswordMatch] = useState(false); // 비번 일치 여부
-  const [isEmailVerified, setIsEmailVerified] = useState(false); // 이메일 인증 여부
-  const [verificationMessage, setVerificationMessage] = useState(""); // 인증 안내 메시지
+  const [id, setId] = useState("");
+  const [password, setPassword] = useState("");
+  const [passwordCheck, setPasswordCheck] = useState("");
+  const [name, setName] = useState("");
+  const [gender, setGender] = useState("");
+  const [email, setEmail] = useState("");
+  const [emailCheck, setEmailCheck] = useState("");
+  const [isPasswordMatch, setIsPasswordMatch] = useState(false);
+  const [isEmailVerified, setIsEmailVerified] = useState(false);
+  const [verificationMessage, setVerificationMessage] = useState("");
 
-  // 환경변수에서 API URL 읽기 (없을 땐 기본값)
   const url = process.env.REACT_APP_API_URL || "http://localhost:5000";
-  // console.log("API URL:", url);
 
-  // 비밀번호 입력 변경 핸들러
   const handlePassword = (e) => {
     const value = e.target.value;
     setPassword(value);
     setIsPasswordMatch(value === passwordCheck);
   };
 
-  // 비밀번호 재확인 입력 변경 핸들러
   const handlePasswordCheck = (e) => {
     const value = e.target.value;
     setPasswordCheck(value);
@@ -45,15 +41,13 @@ function Membership() {
       return;
     }
     try {
-      const response = await axios.post(`${url}/email?email=${email}`, { email });
-      // console.log("이메일 요청:", response.data);
+      await axios.post(`${url}/email?email=${email}`, { email });
       setVerificationMessage("인증번호가 발송되었습니다. 이메일을 확인하세요.");
     } catch (error) {
       if (error.response && (error.response.status === 409 || error.response.status === 403)) {
         alert(error.response.data.message);
       }
       setVerificationMessage("이메일 인증 요청에 실패했습니다.");
-      // console.error(error);
     }
   };
 
@@ -64,25 +58,21 @@ function Membership() {
       return;
     }
     try {
-      const response = await axios.post(`${url}/verify`, {
+      await axios.post(`${url}/verify`, {
         email_check: emailCheck,
         email: email,
       });
-      // console.log("인증 결과:", response.data);
       alert("인증에 성공하셨습니다.");
       setIsEmailVerified(true);
       setVerificationMessage("");
     } catch (error) {
       setVerificationMessage("이메일 인증에 실패했습니다.");
-      // console.error(error);
     }
   };
 
   // 회원가입 폼 제출
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // 필수 입력값 확인
     const requiredFields = {
       id,
       password,
@@ -92,42 +82,35 @@ function Membership() {
       email,
       emailCheck,
     };
-
     for (let [key, value] of Object.entries(requiredFields)) {
       if (!value || !value.trim()) {
         alert(`${key}를 입력하세요.`);
         return;
       }
     }
-
     if (!isPasswordMatch) {
       alert("비밀번호가 일치하지 않습니다.");
       return;
     }
-
     if (!isEmailVerified) {
       alert("이메일 인증을 완료해주세요.");
       return;
     }
-
     try {
-      const response = await axios.post(`${url}/users/register`, {
+      await axios.post(`${url}/users/register`, {
         id,
         password,
         name,
         gender,
         email,
       });
-      // console.log("데이터 전송 성공", response.data);
       alert("회원가입을 완료했습니다.");
-      // 가입 완료 후 폼 초기화 및 이메일 인증 리셋
       setId(""); setPassword(""); setPasswordCheck(""); setName("");
       setGender(""); setEmail(""); setEmailCheck("");
       setIsPasswordMatch(false); setIsEmailVerified(false);
     } catch (error) {
       alert(error.response?.data?.message || "회원가입에 실패했습니다.");
       setIsEmailVerified(false);
-      // console.error("회원가입 실패:", error.response?.data || error.message);
     }
   };
 
