@@ -1,23 +1,20 @@
 import '../App';
 import styles from './Main.module.css'
 import { useNavigate } from 'react-router-dom';
+import Login from "./Login_page/Login"
 // 로그인 버튼 누르면 link 이동
 function Main() {
   const navigate = useNavigate();
   const handle_Login = () => {
-    navigate("/login");
+    navigate("/login"); 
   }
   return (
     /*제목 부분*/
     <div className={styles.grid}>
-      <div className={styles.reportHeader}>
-        <h1>주차별 보고서 관리 시스템</h1>
-        <p>학생들의 주차별 보고서를 효율적으로 관리하고 피드백을 제공하는 플랫폼입니다.</p>
-        <div className={styles.login}>
-          <button onClick={handle_Login}>로그인</button>
-          <button>자세히 알아보기</button>
-        </div>
-      </div>
+      {/*로그인 컴포넌트*/}
+      <Login
+        handle_Login = {handle_Login}
+      />
       {/*전체 공지사항, 보고서 제출, 최신 IT 블로그 모음. 메뉴 구성*/}
       <div className={styles.dashboardContainer}> {/*컨테이너 박스*/}
         <div>
