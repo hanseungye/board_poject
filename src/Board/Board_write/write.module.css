@@ -1,0 +1,106 @@
+.container {
+  min-height: 100vh;
+  background: white; /* 흰 배경을 화면 전체로 */
+  padding: 60px 80px; /* 좌우 여백만 유지 */
+  box-sizing: border-box;
+}
+
+.card {
+  width: 100%;
+  background: white;
+  padding: 40px;
+  box-shadow: none; /* 그림자 제거 or 유지 */
+  border-radius: 0; /* 카드처럼 보이지 않게 */
+}
+
+.boardLabel {
+  font-size: 15px;
+  color: #6b7280;
+  margin-bottom: 8px;
+}
+
+.heading {
+  font-size: 30px;
+  font-weight: 700;
+  margin-bottom: 40px;
+  color: #111827;
+}
+
+.formGroup {
+  margin-bottom: 32px;
+  display: flex;
+  flex-direction: column;
+}
+
+.label {
+  font-size: 16px;
+  margin-bottom: 10px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.input,
+.textarea,
+.fileInput {
+  width: 100%;
+  padding: 14px 18px;
+  font-size: 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background-color: #f9fafb;
+}
+
+.input:focus,
+.textarea:focus {
+  border-color: #3b82f6;
+  outline: none;
+  background-color: #fff;
+}
+
+.textarea {
+  resize: vertical;
+  min-height: 200px;
+}
+
+.fileInfo {
+  font-size: 13px;
+  color: #6b7280;
+  margin-top: 8px;
+}
+
+.buttonGroup {
+  display: flex;
+  justify-content: flex-end;
+  gap: 14px;
+  margin-top: 24px;
+}
+
+.primaryBtn {
+  background-color: #3b82f6;
+  color: white;
+  padding: 12px 26px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.primaryBtn:hover {
+  background-color: #2563eb;
+}
+
+.secondaryBtn {
+  background-color: #f3f4f6;
+  color: #374151;
+  padding: 12px 24px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.secondaryBtn:hover {
+  background-color: #e5e7eb;
+}

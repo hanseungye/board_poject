@@ -1,14 +1,21 @@
 // Board.jsx
 import React from 'react';
 import styles from './board.module.css';
-
+import { useNavigate } from 'react-router-dom';
 function Board() {
+  const navigate = useNavigate();
+  const handle_write = () => {
+    navigate("/board/write");
+  }
   return (
     <div className={styles.container}>
       {/* 헤더 */}
       <div className={styles.headerBox}>
         <h1 className={styles.title}>📢 전체 공지사항</h1>
-        <input className={styles.searchInput} placeholder="공지사항 검색..." />
+        <input 
+          className={styles.searchInput} 
+          placeholder="공지사항 검색..." 
+        />
       </div>
 
       {/* 필터 탭 */}
@@ -66,7 +73,7 @@ function Board() {
       </div>
 
       {/* 글쓰기 버튼 */}
-      <button className={styles.writeBtn}>✏️</button>
+      <button className={styles.writeBtn} onClick={handle_write}>✏️</button>
     </div>
   );
 }
