@@ -11,6 +11,7 @@ const jwt = require('jsonwebtoken');
 const { neon } = require("@neondatabase/serverless");
 
 const sql = neon(process.env.DATABASE_URL);
+
 // 미들웨어
 app.use(cors({
   origin: [
@@ -44,12 +45,11 @@ app.get('/users', async (req, res) => {
 
 
 // 이메일 인증용 임시 저장소
-const codes = {};
+const codes = {}; // ✅ 인증 유효시간을 위한 구조로 수정
+// codes[email] = { code: 123456, expiresAt: 123456789 }
 
-// ✅ POST /email: 인증 코드 전송
 app.post("/email", async (req, res) => {
   try {
-    // 여기! POST니까 body에서 email 받음
     const { email } = req.body;
 
     if (!email || !email.trim()) {
@@ -61,9 +61,11 @@ app.post("/email", async (req, res) => {
       return res.status(400).json({ message: "올바른 이메일을 입력해주세요." });
     }
 
-    // 인증 코드 생성 및 저장
     const authCode = Math.floor(100000 + Math.random() * 900000);
-    codes[email] = authCode;
+    codes[email] = {
+      code: authCode,
+      expiresAt: Date.now() + 5 * 60 * 1000 // ✅ 인증 코드 5분 유효시간 추가
+    };
 
     const mailOption = {
       from: `"이메일 인증" <${process.env.EMAIL_USER}>`,
@@ -83,46 +85,50 @@ app.post("/email", async (req, res) => {
   }
 });
 
-// ✅ POST /verify: 인증 코드 검증
 app.post("/verify", (req, res) => {
   const { email_check, email } = req.body;
   try {
-    if (!email && !email_check) {
+    if (!email || !email_check) {
       return res.status(400).json({ message: "이메일 또는 코드 없음" });
     }
-    if (codes[email] && codes[email] === Number(email_check)) {
+
+    const record = codes[email];
+    if (
+      record &&
+      record.code === Number(email_check) &&
+      Date.now() <= record.expiresAt // ✅ 유효시간 체크
+    ) {
       return res.status(200).json({ message: "인증 성공" });
     } else {
-      return res.status(400).json({ message: "코드 불일치" });
+      return res.status(400).json({ message: "인증 실패. 코드가 만료되었거나 일치하지 않습니다." }); // ✅ 메시지 통일
     }
   } catch (err) {
     console.error("서버 에러:", err);
     return res.status(500).json({ error: "서버 에러" });
-
   }
 });
-// 회원가입 처리 로직
 
+// 회원가입 처리 로직
 app.post("/users/register", async (req, res) => {
   const { id, password, name, gender, email } = req.body;
   try {
-    // 1. 비밀번호 해싱
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
-    // 이메일 중복 체크
+
     const emailResult = await sql`
       SELECT * FROM users WHERE email = ${email};
     `;
     if (emailResult.length > 0){
       return res.status(409).json({message:"이미 가입된 이메일 입니다."});
     } 
+
     const idResult = await sql`
       SELECT * FROM users WHERE id = ${id};
     `;
-    if(idResult.length>0){
+    if(idResult.length > 0){
       return res.status(403).json({message:"아이디가 중복 되었습니다."});
     }
-    // 2. 유저 삽입
+
     const insertResult = await sql`
       INSERT INTO users (id, password, name, gender, email)
       VALUES (${id}, ${hashedPassword}, ${name}, ${gender}, ${email})
@@ -131,7 +137,6 @@ app.post("/users/register", async (req, res) => {
 
     const insertedUser = insertResult[0];
 
-    // 3. role 업데이트 (role이 비어있으면)
     let updatedUser = insertedUser;
     if (!insertedUser.role || insertedUser.role === '') {
       const updateResult = await sql`
@@ -152,24 +157,22 @@ app.post("/users/register", async (req, res) => {
     res.status(500).json({ error: "회원가입 실패!" });
   }
 });
-// 로그인의 값을 받음.
-// 계정이 admin이고, email이랑 password 값이 맞으면 sql문 실행.
-// 만약에 틀리면 권한 오류인 거를 알려줌.
-// 해당 사용자 신원 확인 후 토큰 생성.
-app.post("/users/login/professor", async (req, res) => {
+
+// 로그인 로직
+app.post("/users/login/student", async (req, res) => {
   try {
     const { email, password } = req.body;
-    // 로그 추가
-    console.log("email의 값은? : ", email);
-    console.log("password의 값은? : ", password);
+    if (!email || !password) {
+      return res.status(400).json({ message: "이메일과 비밀번호를 모두 입력해주세요." }); // ✅ return 추가
+    }
 
     const userResult = await sql`
       SELECT * FROM users WHERE email = ${email}
     `;
     const user = userResult[0];
 
-    if (!user || user.role !== "admin") {
-      return res.status(403).json({ message: "관리자 계정이 아니거나 회원등록이 안 되어 있습니다. 가입 부탁 드립니다." });
+    if (!user || user.role !== "user") {
+      return res.status(403).json({ message: "관리자 계정 입니다. 학생 계정 왼쪽에 교수 버튼 클릭해서 로그인 해주시길 바랍니다." });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
@@ -186,18 +189,56 @@ app.post("/users/login/professor", async (req, res) => {
         gender: user.gender,
         name: user.name
       },
-      process.env.JWT_SECRET, // 오타 주의!
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" }
+    );
+
+    res.status(200).json({ message: "ok", token, user: { id: user.id, email: user.email, role: user.role, name: user.name } });
+  } catch (error) {
+    res.status(500).json({ message: "로그인 오류", error: error.message });
+  }
+});
+
+app.post("/users/login/professor", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) {
+      return res.status(400).json({ message: "이메일과 비밀번호를 모두 입력해주세요." }); // ✅ return 추가
+    }
+
+    const userResult = await sql`
+      SELECT * FROM users WHERE email = ${email}
+    `;
+    const user = userResult[0];
+
+    if (!user || user.role !== "admin") {
+      return res.status(403).json({ message: "관리자 계정이 아니거나 회원등록이 안 되어 있습니다. 가입 부탁 드립니다." });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ message: "이메일 또는 비밀번호가 일치하지 않습니다." });
+    }
+
+    const token = jwt.sign(
+      {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        created_at: user.created_at,
+        gender: user.gender,
+        name: user.name
+      },
+      process.env.JWT_SECRET,
       { expiresIn: "1h" }
     );
 
     res.status(200).json({ message: "ok", token, user: { id: user.id, email: user.email, role: user.role, name: user.name } });
   } catch (err) {
-    console.error("로그인 오류:", err);  // 서버 콘솔에서 반드시 확인!
+    console.error("로그인 오류:", err);
     res.status(500).json({ message: "서버 내부 오류", error: err.message });
   }
 });
-
-
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, '0.0.0.0', () => {
