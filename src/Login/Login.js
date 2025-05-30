@@ -71,7 +71,7 @@ function Login() {
         <LoginForm 
           email = {email} 
           setEmail={setEmail} 
-          password={setPassword} 
+          password={password} 
           setPassword={setPassword}
           handleSubmit={handleSubmit}
         />
