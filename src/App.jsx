@@ -3,7 +3,7 @@ import Main from "./Main/Main";
 import Login from "./Login/Login";
 import Membership from "./Membership/Membership";
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-
+import Board from "./Board/Board";
 const queryClient = new QueryClient();
 
 function App() {
@@ -15,7 +15,8 @@ function App() {
           <Route path="/" element={<Main />} />
           <Route path="/main" element={<Main />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/membership" element={<Membership />} />
+          <Route path="/membership" element={<Membership/>} />
+          <Route path="/board" element = {<Board/>}></Route>
           {/* 기타 라우트 */}
         </Routes>
       </Router>

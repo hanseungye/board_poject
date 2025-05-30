@@ -8,6 +8,9 @@ function Main() {
   const handle_Login = () => {
     navigate("/login"); 
   }
+  const handle_Announcement = () =>{
+
+  } 
   return (
     /*제목 부분*/
     <div className={styles.grid}>
@@ -17,7 +20,7 @@ function Main() {
       />
       {/*전체 공지사항, 보고서 제출, 최신 IT 블로그 모음. 메뉴 구성*/}
       <div className={styles.dashboardContainer}> {/*컨테이너 박스*/}
-        <div>
+        <div onClick={handle_Announcement}> {/*공지사항 게시판 이동*/}
           <p>아이콘</p>
           <h3>전체 공지사항</h3>
           <p>중요한 공지사항과 업데이트 정보를 한눈에 확인할 수 있다.</p>
