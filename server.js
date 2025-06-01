@@ -276,14 +276,18 @@ app.post("/notices", async (req, res) => {
     `;
     const insertednotices = notice_Result[0];
     console.log("notice_Result:", notice_Result);
+    if (!notice_Result || notice_Result.length === 0) {
+      return res.status(500).json({ message: "DB 삽입 실패" });
+    }
+
     res.status(201).json({
       message: "데이터 삽입 성공!",
       notices: insertednotices
     });
-  } catch(e){
+  } catch (e) {
     console.error(e);
     res.status(501).json({
-      error:"서버 오류!"
+      error: "서버 오류!"
     });
   }
 });
