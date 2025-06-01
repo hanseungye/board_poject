@@ -275,6 +275,7 @@ app.post("/notices", async (req, res) => {
       RETURNING *;
     `;
     const insertednotices = notice_Result[0];
+    console.log("notice_Result:", notice_Result);
     res.status(201).json({
       message: "데이터 삽입 성공!",
       notices: insertednotices
@@ -290,8 +291,6 @@ app.post("/notices", async (req, res) => {
 // ✅ 수정된 파일 업로드 라우터
 app.post("/notices/file", upload.single("file"), async (req, res) => {
   const File = req.file;
-  console.log(req.file);
-  console.log(`file:`, File);
   if (!File) {
     return res.status(400).json({ message: `파일이 업로드 되지 않았습니다.` });
   }
