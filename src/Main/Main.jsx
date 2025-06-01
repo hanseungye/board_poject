@@ -9,10 +9,9 @@ function Main({isLoggedIn}) {
     navigate("/login"); 
   }
   const handle_Announcement = ()=>{
-    return;
+    navigate("/board/write");
   }
  
-  console.log(`로그인의 상태는? ${isLoggedIn}`);
   return (
     /*제목 부분*/
     <div className={styles.grid}>

@@ -269,14 +269,21 @@ app.post("/users/login/professor", async (req, res) => {
 app.post("/notices", async (req, res) => {
   try {
     const { Title, Content } = req.body;
-    console.log(`Title: ${Title} Content:${Content} `);
-    res.status(200).json({
-      message: "업로드 성공",
-      Title,
-      Content
+    const notice_Result = await sql`
+      INSERT INTO notices (title,content)
+      VALUES (${Title},${Content})
+      RETURNING *;
+    `;
+    const insertednotices = notice_Result[0];
+    res.status(201).json({
+      message: "데이터 삽입 성공!",
+      notices: insertednotices
     });
   } catch(e){
     console.error(e);
+    res.status(501).json({
+      error:"서버 오류!"
+    });
   }
 });
 
