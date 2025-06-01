@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState} from 'react';
 import styles from './Write.module.css';
 import axios from 'axios';
 
@@ -33,7 +33,7 @@ function Write() {
       if (File) {
         let formData = new FormData();
         formData.append("file",File);
-        const response2 = await axios.post(
+        await axios.post(
          "http://localhost:5000/notices/file",
          formData,
          {
