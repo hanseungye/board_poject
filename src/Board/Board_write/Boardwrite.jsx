@@ -11,8 +11,8 @@ function Write() {
     const selectedFile = e.target.files?.[0]; // ✅ 여기서도 File → files 고침
     setFile(selectedFile);
   };
-  // node.js 서버로 전송
-  // 경로를 만들어주면 될 듯
+  // node.js 서버로 전송.
+  // 경로를 만들어주면 될 듯.
   // /api/notices =>  제목과 내용을 저장하는 경로.
   // /api/notices/file => 파일을 저장하는 node.js 경로
   // Title 이랑 Content File이 존재하지 않으면 입력해주세요.
