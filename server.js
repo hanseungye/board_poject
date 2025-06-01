@@ -48,12 +48,12 @@ const codes = {};
 
 // JWT 인증 미들웨어
 function verifyToken(req, res, next) {
-  const token = req.headers.authorization?.split(" ")[1];
-  if (!token) return res.status(401).json({ message: "토큰 없음" });
+  const token = req.headers.authorization?.split(" ")[1]; // 띄어쓰기 기준으로 띄우고 1번째 문자열을 가져옴.(즉 토큰 값.)
+  if (!token) return res.status(401).json({ message: "토큰 없음" }); // 토큰이 없으면 인증되지 않은 요청 
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded;
+    const decoded = jwt.verify(token, process.env.JWT_SECRET); // JWT 서명을 사용해서 토큰이 위조되지 않았는지 검증.
+    req.user = decoded; // jwt에 들어가있는 값을 req.user를 통해 저장
     next();
   } catch (err) {
     return res.status(403).json({ message: "토큰 유효하지 않음" });
@@ -128,9 +128,9 @@ app.post("/users/register", async (req, res) => {
       return res.status(201).json({ message: "회원가입 성공!", user: updated });
     }
 
-    res.status(201).json({ message: "회원가입 성공!", user });
+    return res.status(201).json({ message: "회원가입 성공!", user });
   } catch (err) {
-    res.status(500).json({ error: "회원가입 실패!" });
+    return res.status(500).json({ error: "회원가입 실패!" });
   }
 });
 
@@ -144,7 +144,7 @@ app.post("/users/login/student", async (req, res) => {
     if (!await bcrypt.compare(password, user.password)) return res.status(401).json({ message: "비밀번호가 틀렸습니다." });
 
     const token = jwt.sign(user, process.env.JWT_SECRET, { expiresIn: "1h" });
-    res.status(200).json({ message: "ok", token, user: { id: user.id, email: user.email, role: user.role, name: user.name } });
+    return res.status(200).json({ message: "ok", token, user: { id: user.id, email: user.email, role: user.role, name: user.name } });
   } catch (err) {
     res.status(500).json({ message: "로그인 오류", error: err.message });
   }
@@ -160,9 +160,9 @@ app.post("/users/login/professor", async (req, res) => {
     if (!await bcrypt.compare(password, user.password)) return res.status(401).json({ message: "비밀번호가 틀렸습니다." });
 
     const token = jwt.sign(user, process.env.JWT_SECRET, { expiresIn: "1h" });
-    res.status(200).json({ message: "ok", token, user: { id: user.id, email: user.email, role: user.role, name: user.name } });
+    return res.status(200).json({ message: "ok", token, user: { id: user.id, email: user.email, role: user.role, name: user.name } });
   } catch (err) {
-    res.status(500).json({ message: "서버 오류", error: err.message });
+    return res.status(500).json({ message: "서버 오류", error: err.message });
   }
 });
 
@@ -175,21 +175,53 @@ app.post("/notices", verifyToken, async (req, res) => {
     const [notice] = await sql`
       INSERT INTO notices (title, content, author_id)
       VALUES (${Title}, ${Content}, ${author_id})
-      RETURNING *;
-    `;
+      RETURNING *; 
+    `; // 구조 분해 할당으로 데이터베이스 반환 값이 객체로 저장 됨.
 
-    res.status(201).json({ message: "데이터 삽입 성공!", notice });
+    return res.status(201).json({ 
+      message: "데이터 삽입 성공!", 
+      notice_id: notice.id, // ✔ 프론트에서 notice_id 바로 사용 가능
+      notice
+    
+    });
   } catch (err) {
-    res.status(500).json({ error: "서버 오류!", detail: err.message });
+    return res.status(500).json({ error: "서버 오류!", detail: err.message });
   }
 });
 
 // 파일 업로드
-app.post("/notices/file", upload.single("file"), (req, res) => {
+app.post("/notices/file", upload.single("file"), async (req, res) => {
   const File = req.file;
-  if (!File) return res.status(400).json({ message: "파일이 업로드 되지 않았습니다." });
-  res.status(200).json({ message: "파일 업로드 성공", fileName: File.filename, filePath: File.path });
+  const { notice_id } = req.body;
+
+  if (!File) {
+    return res.status(400).json({ message: "파일이 업로드 되지 않았습니다." });
+  }
+
+  if (!notice_id) {
+    return res.status(400).json({ message: "공지사항 ID가 전달되지 않았습니다." });
+  }
+
+  try {
+    const [uploadedFile] = await sql`
+      INSERT INTO notices_files (notice_id, filename, file_path, file_type)
+      VALUES (${notice_id}, ${File.filename}, ${File.path}, ${File.mimetype})
+      RETURNING *;
+    `;
+
+    res.status(200).json({
+      message: "파일 업로드 성공",
+      file: uploadedFile
+    });
+  } catch (err) {
+    console.error("파일 업로드 중 오류:", err);
+    res.status(500).json({
+      message: "서버 오류 발생",
+      error: err.message
+    });
+  }
 });
+
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, '0.0.0.0', () => {
