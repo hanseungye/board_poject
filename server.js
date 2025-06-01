@@ -271,14 +271,13 @@ app.post("/notices", async (req, res) => {
     const { Title, Content } = req.body;
     console.log(`Title: ${Title} Content:${Content} `);
     res.status(200).json({
-      message: "xkdlxmf 업로드 성공",
+      message: "업로드 성공",
       Title,
       Content
     });
   } catch(e){
     console.error(e);
   }
-
 });
 
 // ✅ 수정된 파일 업로드 라우터

@@ -16,6 +16,11 @@
     justify-content: center;
     padding: 2rem 0;
 }
+.button {
+    display:flex;
+    flex-direction: row;
+    gap:1vw
+}
 
 .reportHeader > h1 {
     font-size: 3rem;

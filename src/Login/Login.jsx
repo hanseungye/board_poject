@@ -5,8 +5,7 @@ import axios from 'axios';
 import { useQueryClient } from '@tanstack/react-query';
 import RoleSelector from './components/RoleSelector';// ❗ 폴더 경로 확인
 import LoginForm from './components/LoginForm';
-
-function Login() {
+function Login({setisLoggedIn}) {
   // 상태 관리
   const [email, setEmail] = useState('');
   const [role, setRole] = useState('교수');
@@ -35,15 +34,16 @@ function Login() {
         { email, password },
         { headers: { 'Content-Type': 'application/json' } }
       );
-
       const { token, user } = response.data;
-
+      console.log(user);
       // 저장
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify(user));
-      queryClient.setQueryData(['auth', 'token'], token);
-      queryClient.setQueryData(['auth', 'user'], user);
+      localStorage.setItem('token', token); // token이라는 변수를 선언하고 token 객체를 초기화화
+      localStorage.setItem('user', JSON.stringify(user));// user라는 변수를 선언하고 user 객체를 초기화.
 
+      queryClient.setQueryData(['auth', 'token'], token); // 배열의 키를 auth-token이라는 키 생성 값은 token
+      queryClient.setQueryData(['auth', 'user'], user); // 배열의 키를 auth-user라는 키 생성 값은 user
+
+      setisLoggedIn(true); // 로그인 완료시 
       alert('로그인 성공! 메인 페이지로 이동합니다.');
       navigate('/main');
     } catch (err) {

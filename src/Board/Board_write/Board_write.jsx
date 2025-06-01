@@ -43,7 +43,10 @@ function Write() {
          }
         );
         const data2 = response.data;
-        console.log(`파일을 성공적으로 불러왔습니다. ${JSON.stringify(data2)}`);
+        if(data2){
+          alert("데이터를 성공적으로 불러왔습니다.");
+          console.log(`파일을 성공적으로 불러왔습니다. ${JSON.stringify(data2)}`);
+        }
       }
     } catch (e) {
       alert("데이터 전송 실패");

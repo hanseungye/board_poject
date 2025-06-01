@@ -3,20 +3,23 @@ import styles from './Main.module.css'
 import { useNavigate } from 'react-router-dom';
 import Login from "./Login_page/Login"
 // 로그인 버튼 누르면 link 이동
-function Main() {
+function Main({isLoggedIn}) {
   const navigate = useNavigate();
   const handle_Login = () => {
     navigate("/login"); 
   }
-  const handle_Announcement = () =>{
-
-  } 
+  const handle_Announcement = ()=>{
+    return;
+  }
+ 
+  console.log(`로그인의 상태는? ${isLoggedIn}`);
   return (
     /*제목 부분*/
     <div className={styles.grid}>
       {/*로그인 컴포넌트*/}
       <Login
         handle_Login = {handle_Login}
+        isLoggedIn = {isLoggedIn} // 로그인 상태 여부.
       />
       {/*전체 공지사항, 보고서 제출, 최신 IT 블로그 모음. 메뉴 구성*/}
       <div className={styles.dashboardContainer}> {/*컨테이너 박스*/}
