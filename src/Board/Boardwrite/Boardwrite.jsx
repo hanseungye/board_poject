@@ -37,7 +37,7 @@ function Write() {
       if (File) {
         const formData = new FormData();
         formData.append("file", File);
-        formData.append("notice_id",noticeid);
+        formData.append("notice_id",noticeid); // db에서 받은 noticeid..
 
         const response2 = await axios.post(
           "http://localhost:5000/notices/file",

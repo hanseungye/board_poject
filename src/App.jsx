@@ -6,6 +6,7 @@ import Membership from "./Membership/Membership";
 import Boardwrite from "./Board/Boardwrite/Boardwrite"
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import Board from "./Board/Board";
+import NoticeDetail from "./NoticeDetail/NoticeDetail"
 const queryClient = new QueryClient();
 function App() {
   const [isLoggedIn,setisLoggedIn] = useState(false);
@@ -20,6 +21,7 @@ function App() {
           <Route path="/membership" element={<Membership/>} />
           <Route path="/board" element = {<Board/>}></Route>
           <Route path="/board/write"element = {<Boardwrite/>}/>
+          <Route path = "/notices/:id" element = {<NoticeDetail/>}/>
           {/* 기타 라우트 */}
         </Routes>
       </Router>

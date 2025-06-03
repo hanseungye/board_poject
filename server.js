@@ -10,6 +10,7 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 const { neon } = require("@neondatabase/serverless");
+const sanitize = require("sanitize-filename");
 
 const sql = neon(process.env.DATABASE_URL);
 
@@ -27,10 +28,14 @@ if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, uploadDir),
   filename: (req, file, cb) => {
-    const uniqueName = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(null, uniqueName + path.extname(file.originalname));
+    const basename = path.parse(file.originalname).name;
+    const ext = path.extname(file.originalname);
+    const uniqueSuffix = Date.now();
+    const finalName = `${basename}-${uniqueSuffix}${ext}`; // ✅ 그 다음에 사용
+    cb(null, finalName); // 최종 파일 이름을 저장
   },
 });
+
 const upload = multer({ storage });
 
 // 이메일 전송 설정
@@ -125,7 +130,7 @@ app.post("/users/register", async (req, res) => {
       const [updated] = await sql`
         UPDATE users SET role = 'user' WHERE id = ${user.id} RETURNING *;
       `;
-      return res.status(201).json({ message: "회원가입 성공!", user: updated });
+      return res.status(201).json({ message: "회원가입 성공!", user: updated});
     }
 
     return res.status(201).json({ message: "회원가입 성공!", user });
@@ -182,7 +187,6 @@ app.post("/notices", verifyToken, async (req, res) => {
       message: "데이터 삽입 성공!", 
       notice_id: notice.id, // ✔ 프론트에서 notice_id 바로 사용 가능
       notice
-    
     });
   } catch (err) {
     return res.status(500).json({ error: "서버 오류!", detail: err.message });
@@ -222,7 +226,87 @@ app.post("/notices/file", upload.single("file"), async (req, res) => {
   }
 });
 
+app.get("/notices/list", async (req, res) => {
+  const page = Number(req.query.page) || 1;
+  const limit = Number(req.query.limit) || 10;
+  // offset은 데이터를 건너 뛸 개수.
+  //  페이지 1 → offset = 0 → 1번부터 10개
+  //  페이지 2 → offset = 10 → 11번부터 10개
+  //  페이지 3 → offset = 20 → 21번부터 10개
+  const offset = (page - 1) * limit;
 
+  try {
+    const result = await sql`
+      SELECT 
+        n.id,
+        n.title,
+        u.name AS author_name,
+        n.created_at,
+        n.views_count
+      FROM notices n
+      JOIN users u ON n.author_id = u.id
+      ORDER BY n.created_at DESC
+      LIMIT ${limit} OFFSET ${offset}
+    `; 
+    // Limit는 한 페이지에 10개씩 가져오는 코드
+    // offset은 몇 개를 넘길지 정하는 코드.
+
+    const [{ count }] = await sql`
+      SELECT COUNT(*)::int FROM notices;
+    `;
+
+    return res.status(200).json({ notices: result, total: count });
+  } catch (e) {
+    console.error("공지사항 목록 가져오기 실패", e);
+    return res.status(500).json({ message: "서버 오류 발생" });
+  }
+});
+app.get("/notices/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    const [notice] = await sql`
+      SELECT n.*, u.name AS author_name
+      FROM notices n
+      JOIN users u ON n.author_id = u.id
+      WHERE n.id = ${id};
+    `;
+
+    if (!notice) {
+      return res.status(404).json({ message: "공지사항이 존재하지 않습니다." });
+    }
+
+    res.status(200).json(notice);
+  } catch (err) {
+    console.error("상세 공지사항 조회 실패:", err);
+    res.status(500).json({ message: "서버 에러" });
+  }
+});
+app.patch('/notices/:id/views',async(req,res)=>{
+  const {id} = req.params;
+
+  try{
+    await sql`
+      UPDATE notices
+      SET views_count = views_count+1
+      WHERE id = ${id};
+    `;
+    res.status(200).json({message:"조회수 증가 성공"});
+  } catch(err){
+    console.error("조회수 증가 실패:",err);
+    res.status(500).json({message:"서버 오류"});
+  }
+});
+
+app.delete("/notices/:id", async(req,res)=>{
+  const {id} = req.params;
+  try{
+    await sql `DELETE FROM notices WHERE id = ${id}`;
+    res.status(200).json({message:"삭제 성공"});
+  } catch(err){
+    console.error("삭제 실패",err);
+    res.status(500).json({message:"서버 오류"});
+  }
+});
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`서버 실행 중: http://0.0.0.0:${PORT}`);

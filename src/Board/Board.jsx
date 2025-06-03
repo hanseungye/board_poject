@@ -1,29 +1,56 @@
 // Board.jsx
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import styles from './board.module.css';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 function Board() {
   const navigate = useNavigate();
+  const [notices, setNotices] = useState([]);         // 공지사항 데이터를 저장하는 상태
+  const [currentPage, setCurrentPage] = useState(1);  // 현재 페이지 번호 (기본값: 1)
+  const [total, setTotal] = useState(0);              // 전체 공지사항 개수
+  const pageSize = 10;                                // 한 페이지에 표시할 공지사항 수
+
   const handle_write = () => {
     navigate("/board/write");
   }
+  useEffect(() => {
+    axios.get(`http://localhost:5000/notices/list?page=${currentPage}&limit=${pageSize}`)
+      .then(res => {
+        setNotices(res.data.notices);
+        setTotal(res.data.total);
+      })
+      .catch(err => console.error("공지사항 로드 실패", err));
+  }, [currentPage]);
+  useEffect(() => {
+    console.log(notices);
+  }, [notices]);
+  // 삭제 버튼 함수.
+  const handle_remove = async (id) => {
+    const confirmDelete = window.confirm("정말 삭제하겠습니까?");
+    if(!confirmDelete) return;
+    try{
+      await axios.delete(`http://localhost:5000/notices/${id}`);
+      setNotices((prev) => prev.filter((item)=> item.id !== id));
+    } catch(err){
+      console.error("삭제 실패:",err);
+      alert("삭제 중 오류가 발생했습니다.");
+    }
+  } 
+  const totalPages = Math.ceil(total / pageSize); // 총 페이지 수.
   return (
     <div className={styles.container}>
       {/* 헤더 */}
       <div className={styles.headerBox}>
         <h1 className={styles.title}>📢 전체 공지사항</h1>
-        <input 
-          className={styles.searchInput} 
-          placeholder="공지사항 검색..." 
+        <input
+          className={styles.searchInput}
+          placeholder="공지사항 검색..."
         />
       </div>
 
       {/* 필터 탭 */}
       <div className={styles.tabBox}>
         <button className={`${styles.tab} ${styles.active}`}>전체</button>
-        <button className={styles.tab}>중요</button>
-        <button className={styles.tab}>신규</button>
-        <button className={styles.tab}>긴급</button>
       </div>
 
       {/* 테이블 헤더 */}
@@ -37,39 +64,46 @@ function Board() {
       </div>
 
       {/* 공지 아이템 */}
-      <div className={styles.noticeItem}>
-        <span>15</span>
-        <div className={styles.titleBox}>
-          <span className={`${styles.badge} ${styles.emergency}`}>긴급</span>
-          <span>시스템 점검으로 인한 서비스 일시 중단 안내</span>
+      {notices.map((notice, index) => (
+        <div key={index} className={styles.noticeItem}>
+          <span>{notice.id}</span>
+          <div className={styles.titleBox}>
+            {/* 중요/긴급 표시 로직이 있다면 여기에 추가 */}
+            <span
+              className={styles.clickableTitle}
+              onClick={() => navigate(`/notices/${notice.id}`)}
+            >
+              {notice.title}
+            </span>
+          </div>
+          <span>{notice.author_name}</span>
+          <span>{new Date(notice.created_at).toLocaleDateString()}</span>
+          <span>{notice.views_count}</span>
+          <button 
+            className ={styles.deleteBtn}
+             onClick={handle_remove(notice.id)}
+          >
+            삭제
+          </button>
         </div>
-        <span>관리자</span>
-        <span>2025.05.30</span>
-        <span>1,245</span>
-        <button className={styles.deleteBtn}>삭제</button>
-      </div>
-
-      <div className={styles.noticeItem}>
-        <span>14</span>
-        <div className={styles.titleBox}>
-          <span className={`${styles.badge} ${styles.important}`}>중요</span>
-          <span>개인정보 보호정책 개정 안내</span>
-        </div>
-        <span>관리자</span>
-        <span>2025.05.28</span>
-        <span>892</span>
-        <button className={styles.deleteBtn}>삭제</button>
-      </div>
-
+      ))}
       {/* 페이지네이션 */}
       <div className={styles.pagination}>
-        <button>«</button>
-        <button>‹</button>
-        <button className={styles.activePage}>1</button>
-        <button>2</button>
-        <button>3</button>
-        <button>›</button>
-        <button>»</button>
+        <button disabled={currentPage === 1} onClick={() => setCurrentPage(1)}>«</button>
+        <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)}>‹</button>
+        {/*totalPages: 총 페이지 수*/}
+        {Array.from({length: totalPages}, (_, i) => i + 1).map(page => (
+          <button
+            key={page}
+            className={page === currentPage ? styles.activePage : ''}
+            onClick={() => setCurrentPage(page)}
+          >
+            {page}
+          </button>
+        ))}
+
+        <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)}>›</button>
+        <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(totalPages)}>»</button>
       </div>
 
       {/* 글쓰기 버튼 */}

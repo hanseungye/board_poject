@@ -9,7 +9,7 @@ function Main({isLoggedIn}) {
     navigate("/login"); 
   }
   const handle_Announcement = ()=>{
-    navigate("/board/write");
+    navigate("/board");
   }
  
   return (

@@ -25,6 +25,7 @@
     "react-dom": "^19.1.0",
     "react-router-dom": "^6.30.0",
     "react-scripts": "5.0.1",
+    "sanitize-filename": "^1.6.3",
     "web-vitals": "^2.1.4"
   },
   "scripts": {
