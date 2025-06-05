@@ -25,6 +25,7 @@ app.use(express.json());
 const uploadDir = path.join(__dirname, "files");
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
 
+app.use("/files", express.static(path.join(__dirname, "files")));
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, uploadDir),
   filename: (req, file, cb) => {
@@ -37,6 +38,22 @@ const storage = multer.diskStorage({
 });
 
 const upload = multer({ storage });
+// ✅ 서버
+app.get("/download/:filename", (req, res) => {
+  const filename = req.params.filename;
+  const filepath = path.join(__dirname, "files", filename);
+
+  if (!fs.existsSync(filepath)) {
+    return res.status(404).send("파일이 존재하지 않습니다.");
+  }
+
+  res.download(filepath, filename, (err) => {
+    if (err) {
+      console.error("파일 다운로드 오류:", err);
+      res.status(500).send("파일 다운로드 실패");
+    }
+  });
+});
 
 // 이메일 전송 설정
 const transporter = nodemailer.createTransport({
@@ -52,7 +69,7 @@ const transporter = nodemailer.createTransport({
 const codes = {};
 
 // JWT 인증 미들웨어
-function verifyToken(req, res, next) {
+function verifyToken(req, res, next) { // 클라이언트에서 데이터를 보내면 JWT 검증을 통해 사용자 인증함.
   const token = req.headers.authorization?.split(" ")[1]; // 띄어쓰기 기준으로 띄우고 1번째 문자열을 가져옴.(즉 토큰 값.)
   if (!token) return res.status(401).json({ message: "토큰 없음" }); // 토큰이 없으면 인증되지 않은 요청 
 
@@ -130,7 +147,7 @@ app.post("/users/register", async (req, res) => {
       const [updated] = await sql`
         UPDATE users SET role = 'user' WHERE id = ${user.id} RETURNING *;
       `;
-      return res.status(201).json({ message: "회원가입 성공!", user: updated});
+      return res.status(201).json({ message: "회원가입 성공!", user: updated });
     }
 
     return res.status(201).json({ message: "회원가입 성공!", user });
@@ -183,8 +200,8 @@ app.post("/notices", verifyToken, async (req, res) => {
       RETURNING *; 
     `; // 구조 분해 할당으로 데이터베이스 반환 값이 객체로 저장 됨.
 
-    return res.status(201).json({ 
-      message: "데이터 삽입 성공!", 
+    return res.status(201).json({
+      message: "데이터 삽입 성공!",
       notice_id: notice.id, // ✔ 프론트에서 notice_id 바로 사용 가능
       notice
     });
@@ -225,34 +242,57 @@ app.post("/notices/file", upload.single("file"), async (req, res) => {
     });
   }
 });
+// 파일 목록만 따로 가져오기.
+app.get("/notices/files/:noticeId", async (req, res) => {
+  const noticeId = req.params.noticeId;
+
+  try {
+    const files = await sql`
+      SELECT id, filename, file_path, file_type, created_at
+      FROM notices_files
+      WHERE notice_id = ${noticeId}
+      ORDER BY created_at ASC
+    `;
+
+    res.status(200).json({ files }); // ← 키도 영어로 수정하는 게 좋아
+  } catch (err) {
+    console.error("파일 목록 조회 실패:", err); // ← 여기서도 catch 매개변수를 e → err로
+    res.status(500).json({ message: "파일 조회 중 서버 오류" });
+  }
+});
+
 
 app.get("/notices/list", async (req, res) => {
   const page = Number(req.query.page) || 1;
   const limit = Number(req.query.limit) || 10;
-  // offset은 데이터를 건너 뛸 개수.
-  //  페이지 1 → offset = 0 → 1번부터 10개
-  //  페이지 2 → offset = 10 → 11번부터 10개
-  //  페이지 3 → offset = 20 → 21번부터 10개
   const offset = (page - 1) * limit;
+  const search = req.query.search || "";
 
   try {
     const result = await sql`
       SELECT 
         n.id,
         n.title,
+        n.content,
         u.name AS author_name,
         n.created_at,
-        n.views_count
+        n.views_count,
+        f.filename
       FROM notices n
       JOIN users u ON n.author_id = u.id
+      LEFT JOIN notices_files f ON n.id = f.notice_id
+      WHERE n.title ILIKE ${'%' + search + '%'}
+        OR u.name ILIKE ${'%' + search + '%'}
       ORDER BY n.created_at DESC
       LIMIT ${limit} OFFSET ${offset}
-    `; 
-    // Limit는 한 페이지에 10개씩 가져오는 코드
-    // offset은 몇 개를 넘길지 정하는 코드.
+    `;
 
     const [{ count }] = await sql`
-      SELECT COUNT(*)::int FROM notices;
+      SELECT COUNT(*)::int
+      FROM notices n
+      JOIN users u ON n.author_id = u.id
+      WHERE n.title ILIKE ${'%' + search + '%'}
+        OR u.name ILIKE ${'%' + search + '%'}
     `;
 
     return res.status(200).json({ notices: result, total: count });
@@ -261,13 +301,18 @@ app.get("/notices/list", async (req, res) => {
     return res.status(500).json({ message: "서버 오류 발생" });
   }
 });
+
 app.get("/notices/:id", async (req, res) => {
   const { id } = req.params;
   try {
     const [notice] = await sql`
-      SELECT n.*, u.name AS author_name
+      SELECT 
+        n.*, 
+        u.name AS author_name,
+        f.filename
       FROM notices n
       JOIN users u ON n.author_id = u.id
+      LEFT JOIN notices_files f ON n.id = f.notice_id
       WHERE n.id = ${id};
     `;
 
@@ -281,32 +326,133 @@ app.get("/notices/:id", async (req, res) => {
     res.status(500).json({ message: "서버 에러" });
   }
 });
-app.patch('/notices/:id/views',async(req,res)=>{
-  const {id} = req.params;
 
-  try{
+app.patch('/notices/:id/views', async (req, res) => {
+  const { id } = req.params;
+
+  try {
     await sql`
       UPDATE notices
       SET views_count = views_count+1
       WHERE id = ${id};
     `;
-    res.status(200).json({message:"조회수 증가 성공"});
-  } catch(err){
-    console.error("조회수 증가 실패:",err);
-    res.status(500).json({message:"서버 오류"});
+    res.status(200).json({ message: "조회수 증가 성공" });
+  } catch (err) {
+    console.error("조회수 증가 실패:", err);
+    res.status(500).json({ message: "서버 오류" });
   }
 });
 
-app.delete("/notices/:id", async(req,res)=>{
-  const {id} = req.params;
-  try{
-    await sql `DELETE FROM notices WHERE id = ${id}`;
-    res.status(200).json({message:"삭제 성공"});
-  } catch(err){
-    console.error("삭제 실패",err);
-    res.status(500).json({message:"서버 오류"});
+app.delete("/notices/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    await sql`DELETE FROM notices WHERE id = ${id}`;
+    res.status(200).json({ message: "삭제 성공" });
+  } catch (err) {
+    console.error("삭제 실패", err);
+    res.status(500).json({ message: "서버 오류" });
   }
 });
+app.post("/board/write", verifyToken, async (req, res) => {
+  try {
+    const { title, content } = req.body;
+    const author_id = req.user.id; // JWT 토큰으로부터 유저 ID 추출.
+
+    const [write] = await sql`
+      INSERT INTO board (title, content,author_id)
+      VALUES (${title}, ${content}, ${author_id})
+      RETURNING *;
+    `;
+
+    return res.status(201).json({ message: "입력 성공", write });
+  } catch (err) {
+    console.error("DB 삽입 실패:", err);
+    res.status(500).json({ message: "서버 오류", error: err.message });
+  }
+});
+app.get("/board/list", async (req, res) => {
+  try {
+    const result = await sql`
+      SELECT 
+        b.id,
+        b.title,
+        b.content,
+        b.created_at,
+        b.views_count,
+        u.id AS author_id,
+        u.name AS author_name
+      FROM board b
+      JOIN users u ON b.author_id = u.id
+      ORDER BY b.created_at DESC;
+    `;
+
+    res.status(200).json(result);
+  } catch (err) {
+    console.error("board 불러오기 실패:", err);
+    res.status(500).json({ message: "서버 오류" });
+  }
+});
+/*
+      UPDATE notices
+      SET views_count = views_count+1
+      WHERE id = ${id};
+*/
+app.patch("/board/update/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    const [result] = await sql`
+    UPDATE board
+    SET views_count = views_count+1
+    WHERE id = ${id}
+    RETURNING *;
+  `;
+
+    if (result.length === 0) {
+      return res.status(404).json({ message: "해당 게시글을 찾을 수 없습니다." });
+    }
+    res.status(200).json({ message: "조회수 증가 성공" });
+  } catch (err) {
+    console.error("업데이트 실패", err);
+    res.status(500).json({ message: "서버 오류" });
+  }
+});
+
+app.get("/board/Nation", async (req, res) => {
+  const page = Number(req.query.page) || 1;      // 현재 페이지
+  const limit = Number(req.query.limit) || 10;   // 페이지당 항목 수
+  const offset = (page - 1) * limit;
+
+  try {
+    const result = await sql`
+      SELECT 
+        b.id,
+        b.title,
+        b.content,
+        b.author_id,
+        b.created_at,
+        u.name AS author_name
+      FROM board b
+      JOIN users u ON b.author_id = u.id
+      ORDER BY b.created_at DESC
+      LIMIT ${limit} OFFSET ${offset}
+    `;
+
+    const [{ count }] = await sql`
+      SELECT COUNT(*)::int
+      FROM board b
+      JOIN users u ON b.author_id = u.id
+    `;
+
+    return res.status(200).json({ boards: result, total: count });
+  } catch (err) {
+    console.error("공지사항 목록 가져오기 실패:", err);
+    return res.status(500).json({ message: "서버 오류 발생" });
+  }
+});
+
+
+
+
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`서버 실행 중: http://0.0.0.0:${PORT}`);

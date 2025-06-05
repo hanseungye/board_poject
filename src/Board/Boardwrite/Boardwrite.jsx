@@ -67,7 +67,7 @@ function Write() {
     <div className={styles.container}>
       <div className={styles.card}>
         <h4 className={styles.boardLabel}>공지사항</h4>
-        <h2 className={styles.heading}>새 글쓰기</h2>
+        <h2 className={styles.heading}>보고서 작성 페이지</h2>
 
         <form onSubmit={handleSubmit}>
           <div className={styles.formGroup}>
@@ -93,7 +93,7 @@ function Write() {
           </div>
 
           <div className={styles.formGroup}>
-            <label className={styles.label}>첨부 파일</label>
+            <label className={styles.label}>첨부 파일(전체 공지사항으로 올릴 시 파일 첨부는 하지 말아주세요.)</label>
             <input
               type="file"
               className={styles.fileInput}

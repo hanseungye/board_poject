@@ -9,28 +9,41 @@ function Board() {
   const [currentPage, setCurrentPage] = useState(1);  // 현재 페이지 번호 (기본값: 1)
   const [total, setTotal] = useState(0);              // 전체 공지사항 개수
   const pageSize = 10;                                // 한 페이지에 표시할 공지사항 수
-
+  const [searchKeyword,setSearchKeyword] = useState('');
   const handle_write = () => {
     navigate("/board/write");
   }
+  useEffect(()=>{
+    console.log("notices 데이터는?",notices);
+  },[notices]);
   useEffect(() => {
-    axios.get(`http://localhost:5000/notices/list?page=${currentPage}&limit=${pageSize}`)
-      .then(res => {
-        setNotices(res.data.notices);
+    axios.get(
+      `http://localhost:5000/notices/list?page=${currentPage}&limit=${pageSize}&search=${encodeURIComponent(searchKeyword)}`)
+      .then(async(res) => {
+        const noticeData = res.data.notices;
+        const noticesWithFiles = await Promise.all(
+          noticeData.map(async (notice) => {
+            try{
+              const fileRes = await axios.get(`http://localhost:5000/notices/files/${notice.id}`);
+              return {...notice,file: fileRes.data.files[0]?.filename || null};
+            } catch {
+              return {...notice,file:null};
+            }
+          })
+        );
+        setNotices(noticesWithFiles);
+        console.log(notices);
         setTotal(res.data.total);
       })
       .catch(err => console.error("공지사항 로드 실패", err));
   }, [currentPage]);
-  useEffect(() => {
-    console.log(notices);
-  }, [notices]);
   // 삭제 버튼 함수.
   const handle_remove = async (id) => {
     const confirmDelete = window.confirm("정말 삭제하겠습니까?");
     if(!confirmDelete) return;
     try{
       await axios.delete(`http://localhost:5000/notices/${id}`);
-      setNotices((prev) => prev.filter((item)=> item.id !== id));
+      setNotices((prev) => prev.filter((item)=> item.id !== id)); // 필터링 함수
     } catch(err){
       console.error("삭제 실패:",err);
       alert("삭제 중 오류가 발생했습니다.");
@@ -41,10 +54,17 @@ function Board() {
     <div className={styles.container}>
       {/* 헤더 */}
       <div className={styles.headerBox}>
-        <h1 className={styles.title}>📢 전체 공지사항</h1>
+        <h1 className={styles.title}>📢 보고서 게시판</h1>
         <input
           className={styles.searchInput}
           placeholder="공지사항 검색..."
+          value={searchKeyword}
+          onChange={(e) => setSearchKeyword(e.target.value)}
+          onKeyDown={(e)=>{
+            if(e.key === "Enter"){
+              setCurrentPage(1); // 검색시 1 페이지로.
+            }
+          }}
         />
       </div>
 
@@ -71,7 +91,7 @@ function Board() {
             {/* 중요/긴급 표시 로직이 있다면 여기에 추가 */}
             <span
               className={styles.clickableTitle}
-              onClick={() => navigate(`/notices/${notice.id}`)}
+              onClick={() => navigate(`/notices/${notice.id}`,{state:{notice}})}
             >
               {notice.title}
             </span>
@@ -81,7 +101,7 @@ function Board() {
           <span>{notice.views_count}</span>
           <button 
             className ={styles.deleteBtn}
-             onClick={handle_remove(notice.id)}
+             onClick={()=>handle_remove(notice.id)}
           >
             삭제
           </button>
@@ -91,7 +111,10 @@ function Board() {
       <div className={styles.pagination}>
         <button disabled={currentPage === 1} onClick={() => setCurrentPage(1)}>«</button>
         <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)}>‹</button>
-        {/*totalPages: 총 페이지 수*/}
+        {/*totalPages: 총 페이지 수
+          value는 underfined 이고, 필요 없기 때문에 _로 무시하고,
+          index는 실제로 쓰이니까 i로 받는 거임.
+        */}
         {Array.from({length: totalPages}, (_, i) => i + 1).map(page => (
           <button
             key={page}
