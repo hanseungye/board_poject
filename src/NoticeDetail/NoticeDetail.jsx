@@ -45,7 +45,7 @@ function NoticeDetail() {
     if (!passedNotice) fetchNotice();
     fetchFile();
     increaseViews();
-  }, [id, passedNotice]);
+  }, [id, passedNotice,notice]);
 
   if (!notice) return <div className={styles.loading}>로딩 중...</div>;
 

@@ -36,7 +36,7 @@ function Board() {
         setTotal(res.data.total);
       })
       .catch(err => console.error("공지사항 로드 실패", err));
-  }, [currentPage]);
+  }, [currentPage,searchKeyword]);
   // 삭제 버튼 함수.
   const handle_remove = async (id) => {
     const confirmDelete = window.confirm("정말 삭제하겠습니까?");
