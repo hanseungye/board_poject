@@ -1,4 +1,4 @@
-import React, { useState,useEffect } from 'react';
+import React, { useState} from 'react';
 import styles from './ReportWrite.module.css';
 import axios from 'axios';
 
