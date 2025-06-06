@@ -3,10 +3,9 @@ import styles from './Report.module.css';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
-// url 상수로 분리 (환경 변수 적용)
-const url = process.env.REACT_APP_API_URL || "http://localhost:5000";
-
 function Report() {
+  // url 상수로 분리 (환경 변수 적용)
+  const url = process.env.REACT_APP_API_URL || "http://localhost:5000";
   const navigate = useNavigate();
   const [boards, setBoards] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);

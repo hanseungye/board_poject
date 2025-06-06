@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import styles from './ReportWrite.module.css';
 import axios from 'axios';
 
-// url 상수로 분리 (환경 변수 활용)
-const url = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
 function ReportWrite() {
+  // url 상수로 분리 (환경 변수 활용)
+  const url = process.env.REACT_APP_API_URL || "http://localhost:5000";
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(false);

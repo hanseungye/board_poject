@@ -3,7 +3,7 @@ import styles from './Login.module.css';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useQueryClient } from '@tanstack/react-query';
-import RoleSelector from './components/RoleSelector';// ❗ 폴더 경로 확인
+import RoleSelector from './components/RoleSelector';// 폴더 경로 확인
 import LoginForm from './components/LoginForm';
 function Login({setisLoggedIn}) {
   // 상태 관리

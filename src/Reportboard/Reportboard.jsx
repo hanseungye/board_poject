@@ -3,13 +3,13 @@ import { useParams, useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import styles from "./Reportboard.module.css";
 
-const url = process.env.REACT_APP_API_URL || "http://localhost:5000";
+
 
 function Reportboard() {
   const { id } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
-
+  const url = process.env.REACT_APP_API_URL || "http://localhost:5000";
   const [report, setReport] = useState(location.state?.boards?.find(b => b.id === Number(id)) || null);
 
   useEffect(() => {
