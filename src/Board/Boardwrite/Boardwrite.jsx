@@ -6,6 +6,7 @@ function Write() {
   const [Title, setTitle] = useState('');
   const [Content, setContent] = useState('');
   const [File, setFile] = useState(null);
+  const url = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files?.[0];
@@ -22,8 +23,9 @@ function Write() {
     }
 
     try {
+      // 1. 공지사항 본문 전송
       const response = await axios.post(
-        "http://localhost:5000/notices",
+        `${url}/notices`,
         { Title, Content },
         {
           headers: {
@@ -32,15 +34,16 @@ function Write() {
           }
         }
       );
-      const noticeid = response.data.notice.id; // DB에서 응답받은 id
+      const noticeid = response.data.notice.id;
 
+      // 2. 파일 첨부
       if (File) {
         const formData = new FormData();
         formData.append("file", File);
-        formData.append("notice_id",noticeid); // db에서 받은 noticeid..
+        formData.append("notice_id", noticeid);
 
         const response2 = await axios.post(
-          "http://localhost:5000/notices/file",
+          `${url}/notices/file`,
           formData,
           {
             headers: {
@@ -48,9 +51,9 @@ function Write() {
             }
           }
         );
-        if(response2.status === 200){
-          console.log(" 파일 업로드 성공:", response2.data);
-        } else{
+        if (response2.status === 200) {
+          console.log("파일 업로드 성공:", response2.data);
+        } else {
           console.error("✅ 파일 업로드 실패 또는 이상 응답:");
         }
       }

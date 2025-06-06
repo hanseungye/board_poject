@@ -3,6 +3,8 @@ import { useParams, useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import styles from "./Reportboard.module.css";
 
+const url = process.env.REACT_APP_API_URL || "http://localhost:5000";
+
 function Reportboard() {
   const { id } = useParams();
   const location = useLocation();
@@ -13,7 +15,7 @@ function Reportboard() {
   useEffect(() => {
     const fetchReport = async () => {
       try {
-        const res = await axios.get(`/board/${id}`);
+        const res = await axios.get(`${url}/board/${id}`);
         setReport(res.data);
       } catch (err) {
         console.error("게시글 불러오기 실패:", err);
@@ -21,6 +23,7 @@ function Reportboard() {
     };
 
     if (!report) fetchReport();
+    // eslint-disable-next-line
   }, [id, report]);
 
   if (!report) return <div>로딩 중...</div>;

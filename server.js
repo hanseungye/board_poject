@@ -421,6 +421,7 @@ app.get("/board/Nation", async (req, res) => {
   const page = Number(req.query.page) || 1;      // 현재 페이지
   const limit = Number(req.query.limit) || 10;   // 페이지당 항목 수
   const offset = (page - 1) * limit;
+  const search = req.query.search || "";
 
   try {
     const result = await sql`
@@ -433,6 +434,10 @@ app.get("/board/Nation", async (req, res) => {
         u.name AS author_name
       FROM board b
       JOIN users u ON b.author_id = u.id
+      WHERE
+        b.title ILIKE ${'%'+search+'%'}
+        OR b.content ILIKE ${'%'+ search + '%'}
+        OR u.name ILIKE ${'%'+search+'%'}
       ORDER BY b.created_at DESC
       LIMIT ${limit} OFFSET ${offset}
     `;
@@ -441,6 +446,10 @@ app.get("/board/Nation", async (req, res) => {
       SELECT COUNT(*)::int
       FROM board b
       JOIN users u ON b.author_id = u.id
+      WHERE 
+        b.title ILIKE ${'%'+search+'%'}
+        OR b.content ILIKE ${'%'+search+'%'}
+        OR u.name ILIKE ${'%'+search+'%'}
     `;
 
     return res.status(200).json({ boards: result, total: count });
@@ -449,10 +458,16 @@ app.get("/board/Nation", async (req, res) => {
     return res.status(500).json({ message: "서버 오류 발생" });
   }
 });
-
-
-
-
+app.delete("/board/delete/:id",async (req,res)=>{
+  const {id} = req.params;
+  try{
+    await sql `DELETE FROM board WHERE id = ${id}`;
+    res.status(200).json({message: "데이터 삭제 성공."})
+  } catch(err){
+    console.error("삭제 실패",err);
+    res.status(500).json({message: "서버 오류"});
+  }
+});
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`서버 실행 중: http://0.0.0.0:${PORT}`);

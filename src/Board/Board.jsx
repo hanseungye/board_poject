@@ -10,20 +10,20 @@ function Board() {
   const [total, setTotal] = useState(0);              // 전체 게시글 수
   const [searchKeyword, setSearchKeyword] = useState('');
   const pageSize = 10;                                // 한 페이지당 게시글 수
+  const url = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
-  // 🔁 공지사항 불러오기
   useEffect(() => {
     const fetchNotices = async () => {
       try {
         const res = await axios.get(
-          `http://localhost:5000/notices/list?page=${currentPage}&limit=${pageSize}&search=${encodeURIComponent(searchKeyword)}`
+          `${url}/notices/list?page=${currentPage}&limit=${pageSize}&search=${encodeURIComponent(searchKeyword)}`
         );
         const noticeData = res.data.notices || [];
 
         const noticesWithFiles = await Promise.all(
           noticeData.map(async (notice) => {
             try {
-              const fileRes = await axios.get(`http://localhost:5000/notices/files/${notice.id}`);
+              const fileRes = await axios.get(`${url}/notices/files/${notice.id}`);
               return {
                 ...notice,
                 file: fileRes.data.files[0]?.filename || null,
@@ -51,7 +51,7 @@ function Board() {
     if (!confirmDelete) return;
 
     try {
-      await axios.delete(`http://localhost:5000/notices/${id}`);
+      await axios.delete(`${url}/notices/${id}`);
       setNotices((prev) => prev.filter((item) => item.id !== id));
     } catch (err) {
       console.error("삭제 실패:", err);

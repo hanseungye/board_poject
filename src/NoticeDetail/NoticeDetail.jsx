@@ -10,13 +10,16 @@ function NoticeDetail() {
   const navigate = useNavigate();
 
   const [notice, setNotice] = useState(passedNotice || null);
-  const [filename, setFilename] = useState(null); // ✅ 첨부파일 상태
+  const [filename, setFilename] = useState(null);
+
+  // URL 상수로 분리
+  const url = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
   useEffect(() => {
-    console.log("내용 확인:",notice);
+    console.log("내용 확인:", notice);
     const fetchNotice = async () => {
       try {
-        const res = await axios.get(`http://localhost:5000/notices/${id}`);
+        const res = await axios.get(`${url}/notices/${id}`);
         setNotice(res.data);
       } catch (err) {
         console.error("공지사항 불러오기 실패:", err);
@@ -25,7 +28,7 @@ function NoticeDetail() {
 
     const fetchFile = async () => {
       try {
-        const res = await axios.get(`http://localhost:5000/notices/files/${id}`);
+        const res = await axios.get(`${url}/notices/files/${id}`);
         if (res.data.files.length > 0) {
           setFilename(res.data.files[0].filename);
         }
@@ -36,7 +39,7 @@ function NoticeDetail() {
 
     const increaseViews = async () => {
       try {
-        await axios.patch(`http://localhost:5000/notices/${id}/views`);
+        await axios.patch(`${url}/notices/${id}/views`);
       } catch (err) {
         console.error("조회수 증가 실패:", err);
       }
@@ -45,7 +48,8 @@ function NoticeDetail() {
     if (!passedNotice) fetchNotice();
     fetchFile();
     increaseViews();
-  }, [id, passedNotice,notice]);
+    // eslint-disable-next-line
+  }, [id, passedNotice]);
 
   if (!notice) return <div className={styles.loading}>로딩 중...</div>;
 
@@ -68,7 +72,7 @@ function NoticeDetail() {
           <div className={styles.fileSection}>
             첨부파일:{" "}
             <a
-              href={`http://localhost:5000/download/${encodeURIComponent(filename)}`}
+              href={`${url}/download/${encodeURIComponent(filename)}`}
               download
               className={styles.fileLink}
             >

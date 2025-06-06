@@ -3,19 +3,23 @@ import styles from './Report.module.css';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
-axios.defaults.baseURL = 'http://localhost:5000';
+// url 상수로 분리 (환경 변수 적용)
+const url = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
 function Report() {
   const navigate = useNavigate();
   const [boards, setBoards] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [total, setTotal] = useState(0);
+  const [searchKeyword, setSearchKeyword] = useState("");
   const pageSize = 10;
 
   useEffect(() => {
     const fetchBoards = async () => {
       try {
-        const res = await axios.get(`/board/Nation?page=${currentPage}&limit=${pageSize}`);
+        const res = await axios.get(
+          `${url}/board/Nation?page=${currentPage}&limit=${pageSize}&search=${encodeURIComponent(searchKeyword)}`
+        );
         console.log("서버 응답 데이터:", res.data);
         setBoards(res.data.boards || []);
         setTotal(res.data.total || 0);
@@ -26,14 +30,27 @@ function Report() {
     };
 
     fetchBoards();
-  }, [currentPage]);
+  }, [currentPage, searchKeyword]);
 
   const handleClick = async (boardId) => {
     try {
-      await axios.patch(`/board/update/${boardId}`);
+      await axios.patch(`${url}/board/update/${boardId}`);
       navigate(`/report/${boardId}`, { state: { boards } });
     } catch (err) {
       console.error("조회수 증가 또는 이동 실패:", err);
+    }
+  };
+
+  const handle_remove = async (id) => {
+    try {
+      const confirmDelete = window.confirm("정말 삭제 하시겠습니까?");
+      if (!confirmDelete) return;
+
+      await axios.delete(`${url}/board/delete/${id}`);
+      setBoards((prev) => prev.filter((item) => item.id !== Number(id)));
+    } catch (err) {
+      console.error("데이터 삭제 요청 입니다.", err);
+      alert("삭제 중 오류가 발생했습니다.");
     }
   };
 
@@ -48,7 +65,15 @@ function Report() {
       {/* 헤더 */}
       <div className={styles.headerBox}>
         <h1 className={styles.title}>📢 전체 게시판</h1>
-        <input className={styles.searchInput} placeholder="공지사항 검색..." />
+        <input
+          className={styles.searchInput}
+          placeholder="공지사항 검색..."
+          value={searchKeyword}
+          onChange={(e) => setSearchKeyword(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') setCurrentPage(1);
+          }}
+        />
       </div>
 
       {/* 탭 */}
@@ -80,7 +105,12 @@ function Report() {
           <span>{board.author_name}</span>
           <span>{new Date(board.created_at).toLocaleDateString()}</span>
           <span>{board.views_count}</span>
-          <button className={styles.deleteBtn}>삭제</button>
+          <button
+            className={styles.deleteBtn}
+            onClick={() => handle_remove(board.id)}
+          >
+            삭제
+          </button>
         </div>
       ))}
 
@@ -100,7 +130,6 @@ function Report() {
         >
           ‹
         </button>
-
         {Array.from({ length: totalPages }, (_, i) => (
           <button
             key={i + 1}
@@ -110,7 +139,6 @@ function Report() {
             {i + 1}
           </button>
         ))}
-
         <button
           className={styles.nextBtn}
           disabled={currentPage === totalPages}

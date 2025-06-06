@@ -1,15 +1,15 @@
-import React, { useState} from 'react';
+import React, { useState } from 'react';
 import styles from './ReportWrite.module.css';
 import axios from 'axios';
 
-axios.defaults.baseURL = 'http://localhost:5000'; // ✅ 기본 URL 설정
+// url 상수로 분리 (환경 변수 활용)
+const url = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
 function ReportWrite() {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(false);
-  
-  
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -20,10 +20,10 @@ function ReportWrite() {
     const token = localStorage.getItem('token');
     try {
       setLoading(true);
-      const response = await axios.post('/board/write', {
+      const response = await axios.post(`${url}/board/write`, {
         title,
         content
-      },{
+      }, {
         headers: {
           Authorization: `Bearer ${token}`
         }
