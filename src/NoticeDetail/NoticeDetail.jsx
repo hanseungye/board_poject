@@ -49,7 +49,7 @@ function NoticeDetail() {
     fetchFile();
     increaseViews();
     // eslint-disable-next-line
-  }, [id, passedNotice,url]);
+  }, [id, passedNotice]);
 
   if (!notice) return <div className={styles.loading}>로딩 중...</div>;
 

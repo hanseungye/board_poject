@@ -24,7 +24,7 @@ function Reportboard() {
 
     if (!report) fetchReport();
     // eslint-disable-next-line
-  }, [id, report,url]);
+  }, [id, report]);
 
   if (!report) return <div>로딩 중...</div>;
 

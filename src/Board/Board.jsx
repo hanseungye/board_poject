@@ -43,7 +43,7 @@ function Board() {
     };
 
     fetchNotices();
-  }, [currentPage, searchKeyword,url]);
+  }, [currentPage, searchKeyword]);
 
   // 🔥 삭제 기능
   const handle_remove = async (id) => {
