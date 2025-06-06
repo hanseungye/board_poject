@@ -30,7 +30,7 @@ function Report() {
     };
 
     fetchBoards();
-  }, [currentPage, searchKeyword]);
+  }, [currentPage, searchKeyword,url]);
 
   const handleClick = async (boardId) => {
     try {
