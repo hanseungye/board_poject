@@ -1,11 +1,41 @@
 /* 기존 유지 */
 .grid {
-    display: grid;
-    grid-template-rows: 1fr auto 1fr;
-    grid-template-columns: 1fr 1fr 1fr;
-    height: 100vh;
-    background-color: #F0F4FF; /* ⭐ 연한 파란색 배경 */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 20px;
+  min-height: 100vh;  /* ✅ height → min-height */
+  background-color: #F0F4FF;
 }
+.lockImage {
+  width: 100vw;           /* 👉 가로 전체를 꽉 채움 */
+  height: 150vh;           /* 👉 비율 유지 */
+  display: block;
+  margin: 0 auto 24px;    /* 👉 가운데 정렬 + 아래 여백 */
+}
+.lockBanner {
+  width: 100vw;
+  height: 60vh;
+  background-image: url('../assets/lock.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  margin-bottom: 24px;
+
+  /* ✅ 애니메이션 효과 추가 */
+  animation: moveStars 30s linear infinite;
+}
+
+/* ⭐ 배경이 왼→오로 부드럽게 흐르는 애니메이션 */
+@keyframes moveStars {
+  0% {
+    background-position: 0% center;
+  }
+  100% {
+    background-position: 100% center;
+  }
+}
+
 
 .reportHeader {
     grid-column-start: 1;
@@ -79,19 +109,31 @@
 
 
 .dashboardContainer > div {
-    background: white;
-    border-radius: 0.5rem;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    padding: 1.8rem 1.2rem 1.4rem 1.2rem;
-    width: 21vw;              /* 카드 폭 좀 더 줄임 */
-    min-width: 260px;
-    max-width: 350px;
-    text-align: center;
-    transition: box-shadow 0.2s;
+  background: white;
+  border-radius: 1rem;                 /* ✅ 더 둥글게 */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12); /* ✅ 부드러운 그림자 */
+  padding: 2rem 1.5rem;
+  width: 21vw;
+  min-width: 260px;
+  max-width: 350px;
+  text-align: center;
+  transition: all 0.3s ease-in-out;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.8rem;
+
+  background: linear-gradient(145deg, #ffffff, #e6eaff); /* ✅ 살짝 입체감 */
+  border: 1px solid #e0e7ff;
 }
+
 .dashboardContainer > div:hover {
-    box-shadow: 0 4px 20px 0 rgba(0,0,0,0.14);
+  transform: translateY(-6px);        /* ✅ 약간 위로 띄우기 */
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.15);
+  background: linear-gradient(145deg, #f5f8ff, #ffffff);
 }
+
 
 .dashboardContainer > div p:first-child {
     font-size: 2rem;
@@ -105,3 +147,24 @@
     color: #555;
     font-size: 0.98rem;
 }
+.footer {
+  margin-top: auto;
+  padding: 1.5rem 1rem;
+  font-size: 0.9rem;
+  color: #555;
+  text-align: center;
+  width: 100%;
+  background-color: #f5f8ff;
+  border-top: 1px solid #dbe4ff;
+  line-height: 1.6;
+}
+
+.footer a {
+  color: #3b82f6;
+  text-decoration: none;
+}
+
+.footer a:hover {
+  text-decoration: underline;
+}
+
