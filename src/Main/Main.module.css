@@ -72,19 +72,25 @@
     grid-column-end: 4;
     display: flex;
     flex-direction: row;
-    justify-content: space-evenly;
-    gap: 1rem;
-    padding: 2rem;
+    justify-content: center;
+    gap: 2.5rem;  /* ← 여기만 변경! */
+    padding: 1.2rem 0;
 }
 
-/* ⭐ 카드 스타일 수정 */
+
 .dashboardContainer > div {
     background: white;
     border-radius: 0.5rem;
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    padding: 1.5rem;
-    width: 25vw; /* 👉 기존 250px → 320px */
+    padding: 1.8rem 1.2rem 1.4rem 1.2rem;
+    width: 21vw;              /* 카드 폭 좀 더 줄임 */
+    min-width: 260px;
+    max-width: 350px;
     text-align: center;
+    transition: box-shadow 0.2s;
+}
+.dashboardContainer > div:hover {
+    box-shadow: 0 4px 20px 0 rgba(0,0,0,0.14);
 }
 
 .dashboardContainer > div p:first-child {
@@ -97,5 +103,5 @@
 
 .dashboardContainer > div p:last-child {
     color: #555;
-    font-size: 0.95rem;
+    font-size: 0.98rem;
 }
